@@ -10,33 +10,25 @@ class UserController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  void setUser(UserModel user) {
-    _user = user;
-    notifyListeners();
-  }
-
-  Future<bool> updateUser(String name, String email) async {
+  Future<void> loadUser() async {
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
 
     await Future.delayed(const Duration(milliseconds: 500));
 
-    if (name.isEmpty || email.isEmpty) {
-      _errorMessage = 'Please fill in all fields';
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
+    _user = UserModel(
+      id: '1',
+      name: 'Tree Lover',
+      email: 'user@treeparent.com',
+      createdAt: DateTime.now(),
+    );
 
-    _user = _user?.copyWith(name: name, email: email);
     _isLoading = false;
     notifyListeners();
-    return true;
   }
 
-  void clearError() {
-    _errorMessage = null;
+  void updateUser(UserModel updatedUser) {
+    _user = updatedUser;
     notifyListeners();
   }
 }

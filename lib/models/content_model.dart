@@ -1,56 +1,43 @@
-enum ContentType { article, video, guide }
-enum ContentCategory { basics, watering, fertilizing, pruning, pests, seasonal }
-
 class ContentModel {
   final String id;
   final String title;
   final String description;
   final String content;
-  final String imageUrl;
-  final ContentType type;
-  final ContentCategory category;
-  final int readTimeMinutes;
-  final DateTime publishedAt;
-  final bool isFeatured;
+  final String category;
+  final String? imageUrl;
+  final DateTime createdAt;
 
   ContentModel({
     required this.id,
     required this.title,
     required this.description,
     required this.content,
-    required this.imageUrl,
-    required this.type,
     required this.category,
-    required this.readTimeMinutes,
-    required this.publishedAt,
-    this.isFeatured = false,
+    this.imageUrl,
+    required this.createdAt,
   });
 
-  String get categoryDisplay {
-    switch (category) {
-      case ContentCategory.basics:
-        return 'Basics';
-      case ContentCategory.watering:
-        return 'Watering';
-      case ContentCategory.fertilizing:
-        return 'Fertilizing';
-      case ContentCategory.pruning:
-        return 'Pruning';
-      case ContentCategory.pests:
-        return 'Pest Control';
-      case ContentCategory.seasonal:
-        return 'Seasonal Care';
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'content': content,
+      'category': category,
+      'imageUrl': imageUrl,
+      'createdAt': createdAt.toIso8601String(),
+    };
   }
 
-  String get typeDisplay {
-    switch (type) {
-      case ContentType.article:
-        return 'Article';
-      case ContentType.video:
-        return 'Video';
-      case ContentType.guide:
-        return 'Guide';
-    }
+  factory ContentModel.fromJson(Map<String, dynamic> json) {
+    return ContentModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      content: json['content'] as String,
+      category: json['category'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
   }
 }

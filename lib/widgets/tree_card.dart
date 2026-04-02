@@ -1,146 +1,218 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../config/theme.dart';
+import '../config/routes.dart';
 import '../models/tree_model.dart';
-import 'health_indicator.dart';
+import '../screens/tree_detail_screen.dart';
 
 class TreeCard extends StatelessWidget {
   final TreeModel tree;
-  final VoidCallback onTap;
+  final bool isHorizontal;
 
   const TreeCard({
     super.key,
     required this.tree,
-    required this.onTap,
+    this.isHorizontal = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (isHorizontal) {
+      return _buildHorizontalCard(context);
+    }
+    return _buildVerticalCard(context);
+  }
+
+  Widget _buildHorizontalCard(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _navigateToDetail(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        width: 160,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.park,
+                color: AppTheme.primaryColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              tree.name,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              tree.species,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            _buildHealthBadge(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _navigateToDetail(context),
+      child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: CachedNetworkImage(
-                imageUrl: tree.imageUrl,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  width: 100,
-                  height: 100,
-                  color: AppTheme.surfaceColor,
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryColor,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  width: 100,
-                  height: 100,
-                  color: AppTheme.surfaceColor,
-                  child: const Icon(
-                    Icons.park,
-                    color: AppTheme.primaryColor,
-                    size: 40,
-                  ),
-                ),
+              child: const Icon(
+                Icons.park,
+                color: AppTheme.primaryColor,
+                size: 32,
               ),
             ),
+            const SizedBox(width: 16),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            tree.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        HealthIndicator(
-                          status: tree.healthStatus,
-                          compact: true,
-                        ),
-                      ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tree.name,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      tree.species,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    tree.species,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: AppTheme.textSecondary.withOpacity(0.7),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: AppTheme.textSecondary,
+                      const SizedBox(width: 4),
+                      Text(
+                        tree.location,
+                        style: TextStyle(
+                          color: AppTheme.textSecondary.withOpacity(0.7),
+                          fontSize: 12,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            tree.location,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.cake_outlined,
-                          size: 14,
-                          color: AppTheme.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          tree.ageDisplay,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(
-                Icons.chevron_right,
-                color: AppTheme.textSecondary,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildHealthBadge(),
+                if (tree.needsWatering) ...
+                [
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.warningColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.water_drop,
+                          size: 12,
+                          color: AppTheme.warningColor,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Needs water',
+                          style: TextStyle(
+                            color: AppTheme.warningColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHealthBadge() {
+    final isHealthy = tree.healthStatus == 'Healthy';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: (isHealthy ? AppTheme.successColor : AppTheme.warningColor)
+            .withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        tree.healthStatus,
+        style: TextStyle(
+          color: isHealthy ? AppTheme.successColor : AppTheme.warningColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetail(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TreeDetailScreen(tree: tree),
       ),
     );
   }

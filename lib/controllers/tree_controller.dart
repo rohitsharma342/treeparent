@@ -1,53 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../models/tree_model.dart';
-import '../models/care_log_model.dart';
-import '../data/static_data.dart';
+
+class ReminderModel {
+  final String id;
+  final String treeId;
+  final String treeName;
+  final String type;
+  final String message;
+  final DateTime dueDate;
+
+  ReminderModel({
+    required this.id,
+    required this.treeId,
+    required this.treeName,
+    required this.type,
+    required this.message,
+    required this.dueDate,
+  });
+}
 
 class TreeController extends ChangeNotifier {
   List<TreeModel> _trees = [];
   bool _isLoading = false;
   String? _errorMessage;
-  String _searchQuery = '';
 
-  List<TreeModel> get trees => _searchQuery.isEmpty
-      ? _trees
-      : _trees.where((tree) =>
-          tree.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          tree.species.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-
+  List<TreeModel> get trees => _trees;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String get searchQuery => _searchQuery;
 
-  List<ReminderItem> get reminders {
-    final List<ReminderItem> items = [];
-    final now = DateTime.now();
+  int get healthyTreesCount {
+    return _trees.where((tree) => tree.healthStatus == 'Healthy').length;
+  }
 
-    for (final tree in _trees) {
-      if (tree.lastWatered == null || now.difference(tree.lastWatered!).inDays >= 3) {
-        items.add(ReminderItem(
+  int get needsWateringCount {
+    return _trees.where((tree) => tree.needsWatering).length;
+  }
+
+  List<ReminderModel> get todayReminders {
+    List<ReminderModel> reminders = [];
+    for (var tree in _trees) {
+      if (tree.needsWatering) {
+        reminders.add(ReminderModel(
+          id: '${tree.id}_water',
           treeId: tree.id,
           treeName: tree.name,
-          type: 'Water',
-          dueDate: tree.lastWatered?.add(const Duration(days: 3)) ?? now,
-          isOverdue: tree.lastWatered == null || now.difference(tree.lastWatered!).inDays > 3,
-        ));
-      }
-
-      if (tree.lastFertilized == null || now.difference(tree.lastFertilized!).inDays >= 30) {
-        items.add(ReminderItem(
-          treeId: tree.id,
-          treeName: tree.name,
-          type: 'Fertilize',
-          dueDate: tree.lastFertilized?.add(const Duration(days: 30)) ?? now,
-          isOverdue: tree.lastFertilized == null || now.difference(tree.lastFertilized!).inDays > 30,
+          type: 'Watering',
+          message: '${tree.name} needs watering',
+          dueDate: DateTime.now(),
         ));
       }
     }
-
-    items.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    return items;
+    return reminders;
   }
 
   Future<void> loadTrees() async {
@@ -55,160 +58,64 @@ class TreeController extends ChangeNotifier {
     notifyListeners();
 
     await Future.delayed(const Duration(milliseconds: 500));
-    _trees = StaticData.sampleTrees;
+
+    _trees = [
+      TreeModel(
+        id: '1',
+        name: 'Oak Tree',
+        species: 'Quercus robur',
+        location: 'Front Yard',
+        plantedDate: DateTime(2022, 3, 15),
+        healthStatus: 'Healthy',
+        lastWatered: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      TreeModel(
+        id: '2',
+        name: 'Apple Tree',
+        species: 'Malus domestica',
+        location: 'Backyard',
+        plantedDate: DateTime(2021, 5, 20),
+        healthStatus: 'Healthy',
+        lastWatered: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+      TreeModel(
+        id: '3',
+        name: 'Cherry Blossom',
+        species: 'Prunus serrulata',
+        location: 'Garden',
+        plantedDate: DateTime(2023, 1, 10),
+        healthStatus: 'Needs Attention',
+        lastWatered: DateTime.now().subtract(const Duration(days: 4)),
+      ),
+    ];
 
     _isLoading = false;
     notifyListeners();
   }
 
-  void setSearchQuery(String query) {
-    _searchQuery = query;
+  void addTree(TreeModel tree) {
+    _trees.add(tree);
     notifyListeners();
   }
 
-  TreeModel? getTreeById(String id) {
-    try {
-      return _trees.firstWhere((tree) => tree.id == id);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<bool> addTree(TreeModel tree) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final newTree = TreeModel(
-      id: const Uuid().v4(),
-      name: tree.name,
-      species: tree.species,
-      plantedDate: tree.plantedDate,
-      location: tree.location,
-      healthStatus: tree.healthStatus,
-      imageUrl: tree.imageUrl,
-      notes: tree.notes,
-      careLogs: [],
-      lastWatered: DateTime.now(),
-      lastFertilized: DateTime.now(),
-    );
-
-    _trees.add(newTree);
-    _isLoading = false;
-    notifyListeners();
-    return true;
-  }
-
-  Future<bool> updateTree(TreeModel updatedTree) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
+  void updateTree(TreeModel updatedTree) {
     final index = _trees.indexWhere((tree) => tree.id == updatedTree.id);
     if (index != -1) {
       _trees[index] = updatedTree;
-      _isLoading = false;
       notifyListeners();
-      return true;
     }
-
-    _errorMessage = 'Tree not found';
-    _isLoading = false;
-    notifyListeners();
-    return false;
   }
 
-  Future<bool> deleteTree(String id) async {
-    _isLoading = true;
-    _errorMessage = null;
+  void deleteTree(String treeId) {
+    _trees.removeWhere((tree) => tree.id == treeId);
     notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    _trees.removeWhere((tree) => tree.id == id);
-    _isLoading = false;
-    notifyListeners();
-    return true;
   }
 
-  Future<bool> addCareLog(String treeId, CareLogModel careLog) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
+  void waterTree(String treeId) {
     final index = _trees.indexWhere((tree) => tree.id == treeId);
     if (index != -1) {
-      final tree = _trees[index];
-      final newCareLog = CareLogModel(
-        id: const Uuid().v4(),
-        treeId: treeId,
-        activityType: careLog.activityType,
-        activityDate: careLog.activityDate,
-        notes: careLog.notes,
-      );
-
-      final updatedCareLogs = [...tree.careLogs, newCareLog];
-      
-      DateTime? lastWatered = tree.lastWatered;
-      DateTime? lastFertilized = tree.lastFertilized;
-      DateTime? lastPruned = tree.lastPruned;
-
-      switch (careLog.activityType) {
-        case CareActivityType.watering:
-          lastWatered = careLog.activityDate;
-          break;
-        case CareActivityType.fertilizing:
-          lastFertilized = careLog.activityDate;
-          break;
-        case CareActivityType.pruning:
-          lastPruned = careLog.activityDate;
-          break;
-        default:
-          break;
-      }
-
-      _trees[index] = tree.copyWith(
-        careLogs: updatedCareLogs,
-        lastWatered: lastWatered,
-        lastFertilized: lastFertilized,
-        lastPruned: lastPruned,
-      );
-
-      _isLoading = false;
+      _trees[index] = _trees[index].copyWith(lastWatered: DateTime.now());
       notifyListeners();
-      return true;
     }
-
-    _errorMessage = 'Tree not found';
-    _isLoading = false;
-    notifyListeners();
-    return false;
   }
-
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-}
-
-class ReminderItem {
-  final String treeId;
-  final String treeName;
-  final String type;
-  final DateTime dueDate;
-  final bool isOverdue;
-
-  ReminderItem({
-    required this.treeId,
-    required this.treeName,
-    required this.type,
-    required this.dueDate,
-    this.isOverdue = false,
-  });
 }

@@ -14,9 +14,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
 
   @override
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
       final authController = context.read<AuthController>();
       final success = await authController.login(
         _emailController.text.trim(),
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48),
+                const SizedBox(height: 60),
                 Container(
                   width: 80,
                   height: 80,
@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 const Text(
                   'Welcome Back',
                   style: TextStyle(
@@ -87,17 +87,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
                 Consumer<AuthController>(
-                  builder: (context, authController, _) {
-                    if (authController.errorMessage != null) {
+                  builder: (context, auth, child) {
+                    if (auth.errorMessage != null) {
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
                           color: AppTheme.errorColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppTheme.errorColor.withOpacity(0.3),
-                          ),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
@@ -109,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                authController.errorMessage!,
+                                auth.errorMessage!,
                                 style: const TextStyle(
                                   color: AppTheme.errorColor,
                                   fontSize: 14,
@@ -117,11 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => authController.clearError(),
+                              onTap: () => auth.clearError(),
                               child: const Icon(
                                 Icons.close,
                                 color: AppTheme.errorColor,
-                                size: 18,
+                                size: 20,
                               ),
                             ),
                           ],
@@ -133,17 +130,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hint: 'Enter your email',
-                  keyboardType: TextInputType.emailAddress,
+                  hintText: 'Email',
                   prefixIcon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Please enter a valid email';
                     }
                     return null;
                   },
@@ -151,10 +143,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Enter your password',
-                  obscureText: _obscurePassword,
+                  hintText: 'Password',
                   prefixIcon: Icons.lock_outlined,
+                  obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -172,33 +163,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Password recovery coming soon'),
-                        ),
-                      );
-                    },
-                    child: const Text('Forgot Password?'),
-                  ),
-                ),
                 const SizedBox(height: 24),
                 Consumer<AuthController>(
-                  builder: (context, authController, _) {
+                  builder: (context, auth, child) {
                     return CustomButton(
                       text: 'Sign In',
                       onPressed: _handleLogin,
-                      isLoading: authController.isLoading,
+                      isLoading: auth.isLoading,
                     );
                   },
                 ),
@@ -210,24 +184,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       "Don't have an account? ",
                       style: TextStyle(
                         color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
+                    GestureDetector(
+                      onTap: () {
                         Navigator.pushNamed(context, AppRoutes.register);
                       },
-                      child: const Text('Sign Up'),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 48),
-                const Text(
-                  'Made With BrainBox',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),

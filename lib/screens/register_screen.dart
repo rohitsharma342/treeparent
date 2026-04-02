@@ -14,11 +14,11 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
       final authController = context.read<AuthController>();
       final success = await authController.register(
         _nameController.text.trim(),
@@ -53,8 +53,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -73,28 +74,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Start your tree parenting journey today',
+                  'Start your tree care journey today',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppTheme.textSecondary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
                 Consumer<AuthController>(
-                  builder: (context, authController, _) {
-                    if (authController.errorMessage != null) {
+                  builder: (context, auth, child) {
+                    if (auth.errorMessage != null) {
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
                           color: AppTheme.errorColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppTheme.errorColor.withOpacity(0.3),
-                          ),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
@@ -106,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                authController.errorMessage!,
+                                auth.errorMessage!,
                                 style: const TextStyle(
                                   color: AppTheme.errorColor,
                                   fontSize: 14,
@@ -114,11 +114,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => authController.clearError(),
+                              onTap: () => auth.clearError(),
                               child: const Icon(
                                 Icons.close,
                                 color: AppTheme.errorColor,
-                                size: 18,
+                                size: 20,
                               ),
                             ),
                           ],
@@ -130,8 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 CustomTextField(
                   controller: _nameController,
-                  label: 'Full Name',
-                  hint: 'Enter your full name',
+                  hintText: 'Full Name',
                   prefixIcon: Icons.person_outlined,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -143,17 +142,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hint: 'Enter your email',
-                  keyboardType: TextInputType.emailAddress,
+                  hintText: 'Email',
                   prefixIcon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Please enter a valid email';
                     }
                     return null;
                   },
@@ -161,10 +155,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Create a password',
-                  obscureText: _obscurePassword,
+                  hintText: 'Password',
                   prefixIcon: Icons.lock_outlined,
+                  obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -191,10 +184,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  hint: 'Confirm your password',
-                  obscureText: _obscureConfirmPassword,
+                  hintText: 'Confirm Password',
                   prefixIcon: Icons.lock_outlined,
+                  obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword
@@ -218,13 +210,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Consumer<AuthController>(
-                  builder: (context, authController, _) {
+                  builder: (context, auth, child) {
                     return CustomButton(
                       text: 'Create Account',
                       onPressed: _handleRegister,
-                      isLoading: authController.isLoading,
+                      isLoading: auth.isLoading,
                     );
                   },
                 ),
@@ -236,11 +228,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       'Already have an account? ',
                       style: TextStyle(
                         color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Sign In'),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
